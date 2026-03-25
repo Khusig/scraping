@@ -70,3 +70,7 @@ This is a highly customizable web scraper built with Next.js 14, PostgreSQL, Pri
 - Navigate to URL
 
   - Navigates to a specified URL, loading the desired web page for scraping or interaction.
+ 
+- Data Tracking
+
+  - Tracks changes in data values during execution, storing both old and new values for monitoring and debugging.
