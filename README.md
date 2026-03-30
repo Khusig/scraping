@@ -16,9 +16,10 @@ This is a highly customizable web scraper built with Next.js 14, PostgreSQL, Pri
 
 - Nextjs 14 with server actions
 - React Flow
-- PostgreSQL with Neon DB
+- SQLite
 - Puppeteer
 - Prisma
+- Tailwind CSS
 - [Live Url](https://flowscrape.kartikpawar.dev/)
 
 ## Features
