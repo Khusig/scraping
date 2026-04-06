@@ -30,8 +30,8 @@ export async function executeWorkflow(executionId: string, nextRunAt?: Date) {
   }
 
   const edges = JSON.parse(execution.definition).edges as Edge[];
-
   const enviornment = { phases: {} };
+
   await initializeWorkflowExecution(
     executionId,
     execution.workflowId,
@@ -141,7 +141,8 @@ async function finalizeWorkflowExecution(
     })
     .catch((err) => {
       // Ignoring the error
-      // This means that we have triggred other runs for this workflow, while an execution was running
+      // This means that we have triggered other runs for this workflow
+      // while an execution was running
     });
 }
 
@@ -156,8 +157,9 @@ async function executeWorkflowPhase(
   const logCollector = createLogCollector();
 
   const node = JSON.parse(phase.node) as AppNode;
+
+  // Pass workflowId and userId so they can be auto-injected
   setupEnviornmentForPhase(node, enviornment, edges, workflowId, userId);
-  // Update the status
 
   await prisma.executionPhase.update({
     where: {
@@ -176,9 +178,9 @@ async function executeWorkflowPhase(
 
   const creditsConsumed = success ? creditsRequired : 0;
   if (success) {
-    // executing phase only when credits are available and deducted
     success = await executePhase(phase, node, enviornment, logCollector);
   }
+
   const outputs = enviornment.phases[node.id].outputs;
   await finalizePhase(
     phase.id,
@@ -257,23 +259,24 @@ function setupEnviornmentForPhase(
   for (const input of inputs) {
     if (input.type === TaskParamType.BROWSE_INSTANCE) continue;
 
-    if (input.hideHandle && input.name === "Workflow ID") {
-      enviornment.phases[node.id].inputs[input.name] = workflowId;
+    // Auto-inject Workflow ID and User ID — never need manual connection
+    if (input.name === "Workflow ID") {
+      enviornment.phases[node.id].inputs["Workflow ID"] = workflowId;
       continue;
     }
-    if (input.hideHandle && input.name === "User ID") {
-      enviornment.phases[node.id].inputs[input.name] = userId;
+    if (input.name === "User ID") {
+      enviornment.phases[node.id].inputs["User ID"] = userId;
       continue;
     }
 
+    // Use typed value if present
     const inputValue = node.data.inputs[input.name];
     if (inputValue) {
-      // Input value is defined by user
       enviornment.phases[node.id].inputs[input.name] = inputValue;
       continue;
     }
-    // The input value is coming form ouptut of previous node
 
+    // Otherwise pull from connected edge output
     const connectedEdge = edges.find(
       (edge) => edge.target === node.id && edge.targetHandle === input.name
     );
@@ -285,11 +288,12 @@ function setupEnviornmentForPhase(
         " node.id: ",
         node.id
       );
+      continue;
     }
 
     const outputValue =
-      enviornment.phases[connectedEdge!.source].outputs[
-        connectedEdge!.sourceHandle!
+      enviornment.phases[connectedEdge.source]?.outputs[
+        connectedEdge.sourceHandle!
       ];
 
     enviornment.phases[node.id].inputs[input.name] = outputValue;
@@ -344,7 +348,6 @@ async function decrementCredits(
     return true;
   } catch (error) {
     logCollector.error("Insufficient balance");
-    // user does not have sufficient balance
     return false;
   }
 }

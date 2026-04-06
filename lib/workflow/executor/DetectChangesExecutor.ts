@@ -7,23 +7,30 @@ export async function DetectChangesExecutor(
 ): Promise<boolean> {
   try {
     const trackingKey = environment.getInput("Tracking key");
-    const workflowId  = environment.getInput("Workflow ID");
-    const userId      = environment.getInput("User ID");
+    // Read workflowId and userId from inputs but also fallback to environment
+    const workflowId  = environment.getInput("Workflow ID") || (environment as any).workflowId || (environment as any).environment?.workflowId;
+    const userId      = environment.getInput("User ID")     || (environment as any).userId      || (environment as any).environment?.userId;
 
-    if (!trackingKey || !workflowId || !userId) {
-      environment.log.error("Missing required inputs.");
+    if (!trackingKey) {
+      environment.log.error("Missing required input: Tracking key.");
       return false;
     }
 
-    // Get all distinct sources for this tracking key
+    // Build query — if workflowId is available filter by it, otherwise search by userId only
+    const whereClause: any = { trackingKey };
+    if (workflowId) whereClause.workflowId = workflowId;
+    if (userId)     whereClause.userId      = userId;
+
     const sources = await prisma.dataSnapshot.findMany({
-      where:    { workflowId, trackingKey },
+      where:    whereClause,
       distinct: ["sourceLabel"],
       select:   { sourceLabel: true },
     });
 
     if (sources.length === 0) {
-      environment.log.error(`No snapshots found for tracking key "${trackingKey}". Run a Save Data Snapshot task first.`);
+      environment.log.error(
+        `No snapshots found for tracking key "${trackingKey}". Run a Save Data Snapshot task first.`
+      );
       return false;
     }
 
@@ -42,7 +49,7 @@ export async function DetectChangesExecutor(
 
     for (const { sourceLabel } of sources) {
       const records = await prisma.dataSnapshot.findMany({
-        where:   { workflowId, trackingKey, sourceLabel },
+        where:   { ...whereClause, sourceLabel },
         orderBy: { recordedAt: "desc" },
         take: 2,
       });
@@ -80,7 +87,6 @@ export async function DetectChangesExecutor(
       });
     }
 
-    // For numeric tracking keys, find the "best" source (lowest value — useful for prices)
     const numericResults = results.filter(r => r.numericValue !== null);
     let bestSource = "";
     if (numericResults.length > 0) {
@@ -105,7 +111,9 @@ export async function DetectChangesExecutor(
       },
     };
 
-    environment.log.info(`Compared ${results.length} source(s) for "${trackingKey}". ${changeSummaryAll}`);
+    environment.log.info(
+      `Compared ${results.length} source(s) for "${trackingKey}". ${changeSummaryAll}`
+    );
 
     environment.setOutput("Comparison JSON", JSON.stringify(comparison, null, 2));
     environment.setOutput("Any changed",     anyChanged ? "true" : "false");

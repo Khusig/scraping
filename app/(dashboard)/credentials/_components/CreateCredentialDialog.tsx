@@ -91,27 +91,24 @@ function CreateCredentialDialog({ triggeredText }: { triggeredText?: string }) {
                 )}
               />
               <FormField
-                control={form.control}
-                name="value"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex gap-1 items-center">
-                      Description{" "}
-                      <p className="text-xs text-muted-foreground">
-                        (optinoal)
-                      </p>
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea {...field} className="resize-none" />
-                    </FormControl>
-                    <FormDescription>
-                      Enter the value assosiated with this credential <br />
-                      This value wiil be securely encrypted and stored
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+  control={form.control}
+  name="value"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel className="flex gap-1 items-center">
+        Value <p className="text-xs text-primary">(required)</p>
+      </FormLabel>
+      <FormControl>
+        <Textarea {...field} className="resize-none" />
+      </FormControl>
+      <FormDescription>
+        Enter the value associated with this credential <br />
+        This value will be securely encrypted and stored
+      </FormDescription>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
 
               <Button type="submit" className="w-full" disabled={isPending}>
                 {!isPending ? "Proceed" : <Loader2 className="animate-spin" />}

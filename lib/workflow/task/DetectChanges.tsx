@@ -10,6 +10,12 @@ export const DetectChangesTask = {
   isEntryPoint: false,
   inputs: [
     {
+      name: "Trigger",
+      type: TaskParamType.STRING,
+      required: false,
+      helperText: "Connect from Save Data Snapshot to ensure correct execution order.",
+    },
+    {
       name: "Tracking key",
       type: TaskParamType.STRING,
       required: true,

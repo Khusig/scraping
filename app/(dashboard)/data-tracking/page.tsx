@@ -1,5 +1,6 @@
  import { getTrackingComparisons, getWorkflowsWithSnapshots } from "@/actions/dataTracking";
 import { DataTrackingGrid } from "./_components/DataTrackingGrid";
+import { WorkflowFilter } from "./_components/WorkflowFilter";
 import { ActivityIcon } from "lucide-react";
 
 export default async function DataTrackingPage({
@@ -25,21 +26,10 @@ export default async function DataTrackingPage({
           </div>
         </div>
         {workflows.length > 0 && (
-          <select
-            defaultValue={searchParams.workflowId ?? ""}
-            onChange={(e) => {
-              const url = new URL(window.location.href);
-              if (e.target.value) url.searchParams.set("workflowId", e.target.value);
-              else url.searchParams.delete("workflowId");
-              window.location.href = url.toString();
-            }}
-            className="text-sm border rounded-md px-3 py-1.5 bg-background"
-          >
-            <option value="">All workflows</option>
-            {workflows.map((w: { id: string; name: string}) => (
-              <option key={w.id} value={w.id}>{w.name}</option>
-            ))}
-          </select>
+          <WorkflowFilter
+            workflows={workflows}
+            selected={searchParams.workflowId}
+          />
         )}
       </div>
       <div className="p-4 flex-1 overflow-auto">
