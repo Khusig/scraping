@@ -20,7 +20,6 @@ This is a highly customizable web scraper built with Next.js 14, PostgreSQL, Pri
 - Puppeteer
 - Prisma
 - Tailwind CSS
-- [Live Url](https://flowscrape.kartikpawar.dev/)
 
 ## Features
 
